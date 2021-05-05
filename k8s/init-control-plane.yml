@@ -1,0 +1,33 @@
+# ./init-control-plane.yml
+
+---
+
+- name: 创建控制面板节点
+  hosts: master 
+  gather_facts: yes
+
+  vars:
+      ip_addr: "{{ ansible_default_ipv4['address'] }}"
+      pods_network_cidr: 10.244.0.0/16
+      dest_kube_flannel: ~/kube-flannel.yml
+
+  tasks:
+      - name: 初始化 K8S 控制面板
+        script: "./kubeadm_init_script.sh {{ ip_addr }} {{ pods_network_cidr }}"
+
+      # - name: 上传 Flannel 网络插件的配置文件
+      #   copy:
+      #     src: ./kube-flannel.yml
+      #     dest: "{{ dest_kube_flannel }}"
+
+      # - name: 安装 Flannel 网络插件
+      #   shell: kubectl apply -f {{ dest_kube_flannel }}
+
+      # - name: 等待网络配置完毕
+      #   pause:
+      #     seconds: 10
+      - name: 安装weave网络插件
+        shell: 
+
+      - name: 获取所有运行的 pods 的状态
+        shell: kubectl get pods --all-namespaces

@@ -1,0 +1,31 @@
+# ./init-server.yml
+
+---
+- name: 初始化服务器
+  hosts: all
+  environment:
+    LC_ALL: "en_US.UTF-8"
+    LANG: "en_US.UTF-8"
+  tasks:
+    - name: 禁用服务器 swap 分区
+      command: swapoff -a
+      become: true
+
+    - name: 加载 br_netfilter 内核模块
+      shell: modprobe br_netfilter
+
+    - name: 将 br_netfilter 内湖模块添加到开机启动加载的内核模块列表里
+      copy:
+          src: ./modules-load-k8s.conf
+          dest: /etc/modules-load.d/k8s.conf
+      become: true
+
+    - name: 设置 linux 内核参数
+      copy:
+          src: ./sysctl-k8s.conf
+          dest: /etc/sysctl.d/k8s.conf
+      become: true
+
+    - name: 重新加载所有 sysctl 配置文件中的内核参数设定
+      shell: sysctl --system
+      become: true

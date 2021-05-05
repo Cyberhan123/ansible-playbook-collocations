@@ -1,0 +1,84 @@
+# ./install-dependencies.yaml
+
+---
+- name: 安装 K8S 集群组件
+  hosts: all
+  vars:
+      k8s_gpg_key_path: /usr/share/keyrings/kubernetes-archive-keyring.gpg
+      k8s_apt_repo_url: "deb [signed-by={{ k8s_gpg_key_path }}] https://mirrors.aliyun.com/kubernetes/apt kubernetes-xenial main"
+  tasks:
+
+    - name: 更新 apt
+      apt:
+        update_cache: yes
+      become: true
+
+    - name: 安装必要依赖项
+      apt:
+          name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+      become: true
+
+    - name: 检查 docker 是否已经安装
+      shell: command -v docker
+      register: docker_command
+      ignore_errors: true
+      become: true
+
+    - name: 安装 docker
+      when: "docker_command.rc != 0"
+      # 我们从国内的 daocloud 站点下载 docker
+      # shell: curl -sSL https://get.daocloud.io/docker | sh
+      apt: 
+        name:
+        - docker.io
+      become: true
+
+    - name: 启动 docker，同时将 docker 服务添加到开机启动项
+      service:
+        name: docker
+        state: started
+        enabled: yes
+      become: true
+
+
+    - name: 确认 docker 已经成功安装
+      shell: docker info
+      become: true
+
+
+    - name: Debian/Ubuntu - 添加 apt gpg 密钥
+      apt_key:
+          url: https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg
+          keyring: "{{ k8s_gpg_key_path }}"
+      become: true
+
+
+    - name: 添加 k8s apt 安装包源
+      apt_repository:
+          repo: "{{ k8s_apt_repo_url }}"
+      become: true
+
+    - name: 更新 apt 缓存，使上面的操作生效
+      apt:
+          update_cache: yes
+      become: true
+      
+    - name: 安装 kubelet, kubeadm
+      apt:
+          name:
+              - kubelet
+              - kubeadm
+      become: true
+
+# 我们将会将master服务器作为我们的`控制面板`节点
+- name: 在控制面板节点服务器安装 kubectl
+  hosts: master
+  gather_facts: no
+  tasks:
+    - name: 安装 kubectl
+      apt:
+          name: kubectl
+      become: true

@@ -1,0 +1,8 @@
+ansible_host_key_checking: false
+ansible_python_interpreter: /usr/bin/python3
+
+# 创建虚拟机时候填写的用户名，ansible 会用该用户账号来访问虚拟机服务器
+ansible_user: cyberhan
+
+# 用户密码
+ansible_password: 123456
